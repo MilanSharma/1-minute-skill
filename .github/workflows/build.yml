@@ -1,36 +1,37 @@
-name: Build and Validate
+name: Build 1-Minute Skill
 
 on:
+  workflow_dispatch: # Allows manual trigger
   push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
+    branches:
+      - main
 
 jobs:
   build:
-    name: Validate and Build
+    name: EAS Build
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        platform: [android, ios]
+    
     steps:
-      - name: 🏗️ Checkout repository
+      - name: 🏗 Setup repo
         uses: actions/checkout@v4
 
-      - name: 🥟 Setup Bun
+      - name: 🏗 Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
 
+      - name: 🏗 Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          expo-version: latest
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
       - name: 📦 Install dependencies
         run: bun install
 
-      - name: 🔍 Run Lint
-        run: bun run lint
-
-      - name: 📐 Type Check
-        # Skips emitting files, just checks for TypeScript errors
-        run: bunx tsc --noEmit
-
-      - name: 🏗️ Build Web Bundle (Validation)
-        # Runs expo export to ensure the project bundles correctly
-        # This confirms assets and entry points are valid without needing native creds
-        run: bunx expo export
+      - name: 🚀 Build App
+        run: eas build --platform ${{ matrix.platform }} --profile preview --non-interactive
