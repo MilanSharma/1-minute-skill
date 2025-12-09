@@ -1,0 +1,36 @@
+name: Build and Validate
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    name: Validate and Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🏗️ Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🥟 Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: 📦 Install dependencies
+        run: bun install
+
+      - name: 🔍 Run Lint
+        run: bun run lint
+
+      - name: 📐 Type Check
+        # Skips emitting files, just checks for TypeScript errors
+        run: bunx tsc --noEmit
+
+      - name: 🏗️ Build Web Bundle (Validation)
+        # Runs expo export to ensure the project bundles correctly
+        # This confirms assets and entry points are valid without needing native creds
+        run: bunx expo export
